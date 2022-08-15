@@ -1,7 +1,11 @@
 <template>
   <div>
     <!-- 按钮 -->
-    <el-button type="primary" icon="el-icon-plus" style="margin: 10px 0px"
+    <el-button
+      type="primary"
+      icon="el-icon-plus"
+      style="margin: 10px 0px"
+      @click="showDialog"
       >添加</el-button
     >
     <!-- 
@@ -38,7 +42,11 @@
       <el-table-column prop="prop" label="操作" width="width">
         <template slot-scope="row"
           ><img :src="row.logoUrl" />
-          <el-button type="warning" icon="el-icon-edit" size="mini"
+          <el-button
+            type="warning"
+            icon="el-icon-edit"
+            size="mini"
+            @click="updateTrademark"
             >修改</el-button
           >
           <el-button type="danger" icon="el-icon-delete" size="mini"
@@ -56,7 +64,7 @@
       layout：可以实现分页器布局
       -->
     <el-pagination
-      style="margin-top: 20px; textAlign: center"
+      style="margin-top: 20px; textalign: center"
       :current-page="page"
       :total="total"
       :page-size="limit"
@@ -67,6 +75,39 @@
       @size-change="handleSizeChange"
     >
     </el-pagination>
+    <!-- 
+      对话框
+      :visible.sync:控制对话框显示与隐藏用的
+       -->
+    <el-dialog title="添加品牌" :visible.sync="dialogFormVisible">
+      <!-- 展示表单元素 -->
+      <el-form style="width: 80%">
+        <el-form-item label="品牌名称：" label-width="100px">
+          <el-input v-model="form.name" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="品牌LOGO：" label-width="100px">
+          <!-- 
+            
+             -->
+          <el-upload
+            class="avatar-uploader"
+            action="https://jsonplaceholder.typicode.com/posts/"
+            :show-file-list="false"
+            :on-success="handleAvatarSuccess"
+            :before-upload="beforeAvatarUpload"
+          >
+            <img v-if="imageUrl" :src="imageUrl" class="avatar" />
+            <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+          </el-upload>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogFormVisible = false">取 消</el-button>
+        <el-button type="primary" @click="dialogFormVisible = false"
+          >确 定</el-button
+        >
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -83,6 +124,11 @@ export default {
       total: 0,
       //列表展示的数据
       list: [],
+      //对话框控制显示否
+      dialogFormVisible: false,
+      form: 1,
+      //上传图片使用的属性
+      imageUrl: "",
     };
   },
   methods: {
@@ -99,11 +145,34 @@ export default {
       }
     },
     //当分页器的某一页需要展示数据条数发生变化时会触发
-    handleSizeChange(limit){
+    handleSizeChange(limit) {
       //整理参数
-      this.limit=limit
-      this.getPageList()
-    }
+      this.limit = limit;
+      this.getPageList();
+    },
+    //点击添加品牌按钮
+    showDialog() {
+      this.dialogFormVisible = true;
+    },
+    //修改品牌
+    updateTrademark() {
+      this.dialogFormVisible = true;
+    },
+    handleAvatarSuccess(res, file) {
+      this.imageUrl = URL.createObjectURL(file.raw);
+    },
+    beforeAvatarUpload(file) {
+      const isJPG = file.type === "image/jpeg";
+      const isLt2M = file.size / 1024 / 1024 < 2;
+
+      if (!isJPG) {
+        this.$message.error("上传头像图片只能是 JPG 格式!");
+      }
+      if (!isLt2M) {
+        this.$message.error("上传头像图片大小不能超过 2MB!");
+      }
+      return isJPG && isLt2M;
+    },
   },
   //组件一挂载完毕发请求
   mounted() {
@@ -113,4 +182,27 @@ export default {
 </script>
 
 <style>
+.avatar-uploader .el-upload {
+  border: 1px dashed #d9d9d9;
+  border-radius: 6px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.avatar-uploader .el-upload:hover {
+  border-color: #409eff;
+}
+.avatar-uploader-icon {
+  font-size: 28px;
+  color: #8c939d;
+  width: 178px;
+  height: 178px;
+  line-height: 178px;
+  text-align: center;
+}
+.avatar {
+  width: 178px;
+  height: 178px;
+  display: block;
+}
 </style>
