@@ -49,7 +49,11 @@
             @click="updateTrademark(row)"
             >修改</el-button
           >
-          <el-button type="danger" icon="el-icon-delete" size="mini"
+          <el-button
+            type="danger"
+            @click="deleteTrademark(row)"
+            icon="el-icon-delete"
+            size="mini"
             >删除</el-button
           >
         </template>
@@ -232,11 +236,38 @@ export default {
             //如果添加品牌：停留在第一页 反之当前页
             this.getPageList(this.tmForm.id ? this.page : 1);
           }
-        }else{
+        } else {
           console.log("error submit！！");
-          return false
+          return false;
         }
       });
+    },
+    //删除品牌
+    deleteTrademark(row) {
+      this.$confirm(`你确定删除${row.row.tmName}?`, "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      })
+        .then(async () => {
+          //当用户点击确定按钮时会触发
+          let result = await this.$API.trademark.reqDeleteTrademark(row.row.id);
+          if (result.code == 200) {
+            this.$message({
+              type: "success",
+              message: "删除成功!",
+            });
+          }
+          //再次获取列表数据
+          this.getPageList(this.list.length>1?this.page:this.page-1)
+        })
+        .catch(() => {
+          //当用户点击取消按钮的时候会触发
+          this.$message({
+            type: "info",
+            message: "已取消删除",
+          });
+        });
     },
   },
   //组件一挂载完毕发请求
