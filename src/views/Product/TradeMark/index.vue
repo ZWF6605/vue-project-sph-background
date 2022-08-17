@@ -79,13 +79,16 @@
       对话框
       :visible.sync:控制对话框显示与隐藏用的
        -->
-    <el-dialog :title="tmForm.id?'修改品牌':'添加品牌'" :visible.sync="dialogFormVisible">
+    <el-dialog
+      :title="tmForm.id ? '修改品牌' : '添加品牌'"
+      :visible.sync="dialogFormVisible"
+    >
       <!-- 展示表单元素 model属性：把表单的数据收集到data上，将来表单验证也需要这个属性-->
-      <el-form :model="tmForm" style="width: 80%">
-        <el-form-item label="品牌名称：" label-width="100px">
+      <el-form :model="tmForm" style="width: 80%" :rules="rules" ref="ruleForm">
+        <el-form-item label="品牌名称：" label-width="100px" prop="tmName">
           <el-input v-model="tmForm.tmName" autocomplete="off"></el-input>
         </el-form-item>
-        <el-form-item label="品牌LOGO：" label-width="100px">
+        <el-form-item label="品牌LOGO：" label-width="100px" prop="logoUrl">
           <!-- 
             这里收集数据不能使用v-model，因为不是表单元素
             action：设置图片上传的地址
@@ -130,10 +133,27 @@ export default {
       //对话框控制显示否
       dialogFormVisible: false,
       //收集品牌信息：对象身上的属性不能随意写，需要看接口文档
-      tmForm:{
-        tmName:'',
-        logoUrl:''
-      }
+      tmForm: {
+        tmName: "",
+        logoUrl: "",
+      },
+      //表单验证的规则
+      //require:必须要校验字段（跟前面的五角星有关系） message 提示信息  trigger：用户行为设置（时间的设置blur、change）
+      rules: {
+        //品牌名称的验证规则
+        tmName: [
+          { required: true, message: "请输入品牌名称", trigger: "blur" },
+          //品牌名称长度2-10 文本变化时就会触发
+          {
+            min: 2,
+            max: 10,
+            message: "长度在 2 到 10 个字符",
+            trigger: "change",
+          },
+        ],
+        //品牌logo的验证规则
+        logoUrl: [{ required: true, message: "请选择品牌logo" }],
+      },
     };
   },
   methods: {
@@ -160,7 +180,7 @@ export default {
       //显示对话框
       this.dialogFormVisible = true;
       //清空数据
-      this.tmForm={tmName:'',logoUrl:''}
+      this.tmForm = { tmName: "", logoUrl: "" };
     },
     //修改品牌
     updateTrademark(row) {
@@ -168,14 +188,14 @@ export default {
       //row:当前用户选中这个品牌的信息
       //将已有的品牌信息赋值给tmForm进行展示
       //也就是tmForm存储即为服务器返回品牌信息
-      this.tmForm = {...row.row}
+      this.tmForm = { ...row.row };
     },
     //图片上传成功
     handleAvatarSuccess(res, file) {
       //res是上传成功之后返回的前端数据
       //file是上传你成功之后服务器返回的前端数据
       //收集品牌图片的数据，因为将来要带给服务器
-      this.tmForm.logoUrl=res.data
+      this.tmForm.logoUrl = res.data;
     },
     //图片上传之前
     beforeAvatarUpload(file) {
@@ -191,22 +211,33 @@ export default {
       return isJPG && isLt2M;
     },
     //添加或者修改
-    async addOrUpdateTrademark(){
-      //关闭对话框
-      this.dialogFormVisible=false
-      //发请求（添加|修改品牌）
-      let result = await this.$API.trademark.reqAddOrUpdateTrademark(this.tmForm);
-      if(result.code==200){
-        //弹出信息：添加成功||修改成功
-        this.$message({
-          type:'success',
-          message:this.tmForm.id?'修改品牌成功':'添加品牌成功'
-        })
-        //添加或者修改品牌成功之后，需要再次获取品牌列表进行展示
-        //如果添加品牌：停留在第一页 反之当前页
-        this.getPageList(this.tmForm.id?this.page:1)
-      }
-    }
+    addOrUpdateTrademark() {
+      //当全部验证手段通过，再去书写业务逻辑
+      this.$refs.ruleForm.validate(async (success) => {
+        //如果全部字段符合条件
+        if (success) {
+          //关闭对话框
+          this.dialogFormVisible = false;
+          //发请求（添加|修改品牌）
+          let result = await this.$API.trademark.reqAddOrUpdateTrademark(
+            this.tmForm
+          );
+          if (result.code == 200) {
+            //弹出信息：添加成功||修改成功
+            this.$message({
+              type: "success",
+              message: this.tmForm.id ? "修改品牌成功" : "添加品牌成功",
+            });
+            //添加或者修改品牌成功之后，需要再次获取品牌列表进行展示
+            //如果添加品牌：停留在第一页 反之当前页
+            this.getPageList(this.tmForm.id ? this.page : 1);
+          }
+        }else{
+          console.log("error submit！！");
+          return false
+        }
+      });
+    },
   },
   //组件一挂载完毕发请求
   mounted() {
