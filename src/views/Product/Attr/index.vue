@@ -1,13 +1,40 @@
 <template>
-  <div>attr</div>
+  <div>
+    <el-card style="margin: 20px 0px">
+      <CategorySelect @getCategoryId="getCategoryId"></CategorySelect>
+    </el-card>
+    <el-card></el-card>
+  </div>
 </template>
 
 <script>
 export default {
-    name:'Attr'
-}
+  name: "Attr",
+  data() {
+    return {
+      category1Id: "",
+      category2Id: "",
+      category3Id: "",
+    };
+  },
+  methods: {
+    //自定义事件的回调
+    getCategoryId({ categoryId, level }) {
+      //区分三级分类相应的ID，以及父组件进行存储
+      if (level == 1) {
+        this.category1Id = categoryId;
+        this.category2Id = "";
+        this.category3Id = "";
+      } else if (level == 2) {
+        this.category2Id = categoryId;
+        this.category3Id = "";
+      } else if (level == 3) {
+        this.category3Id = categoryId;
+      }
+    },
+  },
+};
 </script>
 
 <style>
-
 </style>
