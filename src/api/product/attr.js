@@ -21,3 +21,10 @@ export const reqCategory3List =(category2id)=>request({
     url:`/admin/product/getCategory3/${category2id}`,
     method:"get"
 })
+
+//获取平台基础属性的接口
+// /admin/product/attrInfoList/{category1Id}/{category2Id}/{category3Id}  get
+export const reqAttrList = (category1Id,category2Id,category3Id)=>request({
+    url:`/admin/product/attrInfoList/${category1Id}/${category2Id}/${category3Id}`,
+    method:'get'
+})
