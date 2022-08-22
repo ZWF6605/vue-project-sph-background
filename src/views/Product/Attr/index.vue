@@ -9,7 +9,7 @@
           type="primary"
           icon="el-icon-plus"
           :disabled="!category3Id"
-          @click="isShowTable=false"
+          @click="addAttr"
           >添加属性
         </el-button>
         <!-- 表格：展示平台属性 -->
@@ -43,6 +43,7 @@
                 type="warning"
                 icon="el-icon-edit"
                 size="mini"
+                @click="updateAttr(row)"
               ></el-button>
               <el-button
                 type="danger"
@@ -63,7 +64,13 @@
             ></el-input>
           </el-form-item>
         </el-form>
-        <el-button type="primary" icon="el-icon-plus" @click="addAttrValue" :disabled="!attrInfo.attrName">添加属性值</el-button>
+        <el-button
+          type="primary"
+          icon="el-icon-plus"
+          @click="addAttrValue"
+          :disabled="!attrInfo.attrName"
+          >添加属性值</el-button
+        >
         <el-button @click="isShowTable = true">取消</el-button>
         <el-table
           style="width: 100%; margin: 20px 0px"
@@ -77,13 +84,21 @@
             width="80"
           ></el-table-column>
           <el-table-column prop="prop" label="属性值名称" width="width">
-            <template slot-scope="{ row, $index }"
-              ><el-input
+            <template slot-scope="{ row, $index }">
+              <!-- 这里的结构需要用到span和input进行来回的切换 -->
+              <el-input
                 size="mini"
                 placeholder="请输入属性值名称"
                 v-model="row.valueName"
-              ></el-input></template
-          ></el-table-column>
+                v-if="row.flag"
+                @blur="toLook(row)"
+                @keyup.native.enter="toLook(row)"
+              ></el-input>
+              <span v-else @click="row.flag=true" style="display: block">{{
+                row.valueName
+              }}</span>
+            </template></el-table-column
+          >
           <el-table-column prop="prop" label="操作" width="width">
             <template slot-scope="row"
               ><el-button
@@ -101,6 +116,8 @@
 </template>
 
 <script>
+//按需引入lodash当中的深拷贝
+import cloneDeep from "lodash/cloneDeep";
 export default {
   name: "Attr",
   data() {
@@ -111,7 +128,7 @@ export default {
       //接收平台属性的字段
       attrList: [],
       //控制table表格显示与隐藏
-      isShowTable: false,
+      isShowTable: true,
       //收集新增属性|修改属性
       attrInfo: {
         attrName: "", //属性名
@@ -154,15 +171,46 @@ export default {
       }
     },
     //添加属性值回调
-    addAttrValue(){
+    addAttrValue() {
       //向属性值的数组里添加元素
       this.attrInfo.attrValueList.push({
         //是相应属性的ID，目前没有相应的属性的id，所以undefined
-        attrId:undefined,
+        attrId: this.attrInfo.id, //对于修改某一个属性的时候，可以在已有的属性值基础指上新增新的属性值（新增属性值的时候，需要把已有的属性的id带上）
         //相应属性值的名称
-        valueName:'',
-      })
-    }
+        valueName: "",
+        //flag竖向：给每一个属性添加一个标记flag，用户切换查看模式与编辑模式，好处是每一个属性值可以控制自己的模式切换
+        //当前flag属性：响应式数据（数据变化视图跟着变化）
+        flag: true,
+      });
+    },
+    //添加属性按钮的回调
+    addAttr() {
+      //切换table显示与隐藏
+      this.isShowTable = false;
+      //清除数据
+      //收集三级分类的ID
+      this.attrInfo = {
+        attrName: "", //属性名
+        attrValueList: [
+          //属性值，因为属性值可以多个，因此需要的是数组
+        ],
+        categoryId: this.category3Id, //category3Id
+        categoryLevel: 3,
+      };
+    },
+    //修改某一个属性
+    updateAttr(row) {
+      this.isShowTable = false;
+      //将选中的属性赋值给attrInfo
+      //由于数据结构当中存在对象里面套数组，数组里面又套对象，因此需要使用深拷贝解决这类问题
+      //深拷贝，浅拷贝在面试的时候出现频率很高，切记打到手写深拷贝与浅拷贝
+      this.attrInfo = cloneDeep(row.row);
+    },
+    //失去焦点的回调
+    toLook(row) {
+      row.flag = false;
+    },
+    
   },
 };
 </script>
