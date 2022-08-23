@@ -93,19 +93,30 @@
                 v-if="row.flag"
                 @blur="toLook(row)"
                 @keyup.native.enter="toLook(row)"
+                :ref="$index"
               ></el-input>
-              <span v-else @click="row.flag = true" style="display: block">{{
-                row.valueName
-              }}</span>
+              <span
+                v-else
+                @click="toEdit(row, $index)"
+                style="display: block"
+                >{{ row.valueName }}</span
+              >
             </template></el-table-column
           >
           <el-table-column prop="prop" label="操作" width="width">
-            <template slot-scope="row"
-              ><el-button
-                type="danger"
-                size="mini"
-                icon="el-icon-delete"
-              ></el-button></template
+            <template slot-scope="{row,$index}">
+              <!-- 气泡确认框 -->
+              <el-popconfirm
+                :title="`确定要删除${row.valueName}?`"
+                @onConfirm="deleteAttrValue($index)"
+              >
+                <el-button
+                  type="danger"
+                  size="mini"
+                  icon="el-icon-delete"
+                  slot="reference"
+                ></el-button>
+              </el-popconfirm> </template
           ></el-table-column>
         </el-table>
         <el-button type="primary">保存</el-button>
@@ -178,9 +189,12 @@ export default {
         attrId: this.attrInfo.id, //对于修改某一个属性的时候，可以在已有的属性值基础指上新增新的属性值（新增属性值的时候，需要把已有的属性的id带上）
         //相应属性值的名称
         valueName: "",
-        //flag竖向：给每一个属性添加一个标记flag，用户切换查看模式与编辑模式，好处是每一个属性值可以控制自己的模式切换
+        //flag属性：给每一个属性添加一个标记flag，用户切换查看模式与编辑模式，好处是每一个属性值可以控制自己的模式切换
         //当前flag属性：响应式数据（数据变化视图跟着变化）
         flag: true,
+      });
+      this.$nextTick(() => {
+        this.$refs[this.attrInfo.attrValueList.length - 1].focus();
       });
     },
     //添加属性按钮的回调
@@ -206,12 +220,12 @@ export default {
       //深拷贝，浅拷贝在面试的时候出现频率很高，切记打到手写深拷贝与浅拷贝
       this.attrInfo = cloneDeep(row.row);
       //在修改某一个属性的时候，将相应的属性值元素添加上flag标记
-      this.attrInfo.attrValueList.forEach(item=>{
+      this.attrInfo.attrValueList.forEach((item) => {
         //这样书写也可以给属性值添加flag自动，但是会发现视图不会跟着变化（因为flag不是响应式数据）
         //因为Vue无法探测普通的新增property，这样书写的属性并非响应式属性
-        //第一个参数：哪个对象 第二个参数：添加新的响应式属性 第三个参数：新的属性的属性值
-        this.$set(item,'flag',false)
-      })
+        //第一个参数：哪个对象 第二个参数：添加新的响应式属性 第三个参数：新的属性的属性
+        this.$set(item, "flag", false);
+      });
     },
     //失去焦点的回调
     toLook(row) {
@@ -233,6 +247,23 @@ export default {
       //row：形参是当前用户添加的最新的属性值
       //当前的编辑模式变为查看模式【让input消失，显示span】
       row.flag = false;
+    },
+    //点击span的回调，变为编辑模式
+    toEdit(row, index) {
+      row.flag = true;
+      //获取input节点，实现自动对焦
+      //需要注意：点击span的时候，切换为input变为编辑模式，但是需要注意，对于浏览器而言，页面重绘与重排耗时间的
+      //点击span的时候，重绘重排一个input是需要耗费时间，因此我们不可能一点击span就立马获取到input
+      //$nextTick，当节点渲染完毕了会执行一次
+      this.$nextTick(() => {
+        //获取相应的input表单元素实现聚焦
+        this.$refs[index].focus();
+      });
+    },
+    //气泡确认框确定按钮的回调
+    //最新版本的ElementUI----是@confirm，旧版本的是@onConfirm
+    deleteAttrValue(index) {
+      this.attrInfo.attrValueList.splice(index,1)
     },
   },
 };
