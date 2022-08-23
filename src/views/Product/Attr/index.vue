@@ -94,7 +94,7 @@
                 @blur="toLook(row)"
                 @keyup.native.enter="toLook(row)"
               ></el-input>
-              <span v-else @click="row.flag=true" style="display: block">{{
+              <span v-else @click="row.flag = true" style="display: block">{{
                 row.valueName
               }}</span>
             </template></el-table-column
@@ -205,12 +205,35 @@ export default {
       //由于数据结构当中存在对象里面套数组，数组里面又套对象，因此需要使用深拷贝解决这类问题
       //深拷贝，浅拷贝在面试的时候出现频率很高，切记打到手写深拷贝与浅拷贝
       this.attrInfo = cloneDeep(row.row);
+      //在修改某一个属性的时候，将相应的属性值元素添加上flag标记
+      this.attrInfo.attrValueList.forEach(item=>{
+        //这样书写也可以给属性值添加flag自动，但是会发现视图不会跟着变化（因为flag不是响应式数据）
+        //因为Vue无法探测普通的新增property，这样书写的属性并非响应式属性
+        //第一个参数：哪个对象 第二个参数：添加新的响应式属性 第三个参数：新的属性的属性值
+        this.$set(item,'flag',false)
+      })
     },
     //失去焦点的回调
     toLook(row) {
+      //如果属性值为空不能作为新的属性值，需要给用户提示，让他输入一个其他的属性值
+      if (row.valueName.trim() == "") {
+        this.$message("请你输入一个正常的属性值");
+        return;
+      }
+      //新增的属性值不能与已有的属性值重复
+      let isRepat = this.attrInfo.attrValueList.some((item) => {
+        //需要将row从数组里面判断的时候去除
+        //row为最新新增的属性值【数组的最新一个元素】
+        //判断的时候需要把已有的数组当中新增的这个属性值去除
+        if (row !== item) {
+          return row.valueName == item.valueName;
+        }
+      });
+      if (isRepat) return;
+      //row：形参是当前用户添加的最新的属性值
+      //当前的编辑模式变为查看模式【让input消失，显示span】
       row.flag = false;
     },
-    
   },
 };
 </script>
