@@ -1,7 +1,10 @@
 <template>
   <div>
     <el-card style="margin: 20px 0px">
-      <CategorySelect @getCategoryId="getCategoryId"></CategorySelect>
+      <CategorySelect
+        @getCategoryId="getCategoryId"
+        :show="!isShowTable"
+      ></CategorySelect>
     </el-card>
     <el-card>
       <div v-show="isShowTable">
@@ -104,7 +107,7 @@
             </template></el-table-column
           >
           <el-table-column prop="prop" label="操作" width="width">
-            <template slot-scope="{row,$index}">
+            <template slot-scope="{ row, $index }">
               <!-- 气泡确认框 -->
               <el-popconfirm
                 :title="`确定要删除${row.valueName}?`"
@@ -119,7 +122,12 @@
               </el-popconfirm> </template
           ></el-table-column>
         </el-table>
-        <el-button type="primary">保存</el-button>
+        <el-button
+          type="primary"
+          @click="addOrUpdateAttr"
+          :disabled="attrInfo.attrValueList.length < 1"
+          >保存</el-button
+        >
         <el-button @click="isShowTable = true">取消</el-button>
       </div>
     </el-card>
@@ -263,7 +271,31 @@ export default {
     //气泡确认框确定按钮的回调
     //最新版本的ElementUI----是@confirm，旧版本的是@onConfirm
     deleteAttrValue(index) {
-      this.attrInfo.attrValueList.splice(index,1)
+      this.attrInfo.attrValueList.splice(index, 1);
+    },
+    //保存按钮，进行添加属性或者修改属性的操作
+    async addOrUpdateAttr() {
+      //整理参数：1、如果用户添加了很多属性值，且为空，不应该交给服务器
+      //提交给服务器数据当中不应该出现flag字段
+      this.attrInfo.attrValueList = this.attrInfo.attrValueList.filter(
+        (item) => {
+          //过滤掉属性值不为空的
+          if (item.valueName != "") {
+            //删除掉flag属性
+            delete item.flag;
+            return true;
+          }
+        }
+      );
+
+      try {
+        //发请求
+        await this.$API.attr.reqAddOrUpdateAttr(this.attrInfo);
+        this.$message({ type: "success", message: "保存成功" });
+        this.isShowTable = true;
+        //保存成功以后需要再次需要获取平台属性进行展示
+        this.getAttrList();
+      } catch (error) {}
     },
   },
 };

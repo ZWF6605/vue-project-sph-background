@@ -7,6 +7,7 @@
           placeholder="请选择"
           v-model="cForm.category1Id"
           @change="handler1"
+          :disabled="show"
         >
           <el-option
             v-for="Item1 in list1"
@@ -20,6 +21,7 @@
         <el-select
           placeholder="请选择"
           @change="handler2"
+          :disabled="show"
           v-model="cForm.category2Id"
         >
           <el-option
@@ -34,6 +36,7 @@
         <el-select
           placeholder="请选择"
           v-model="cForm.category3Id"
+          :disabled="show"
           @change="handler3"
         >
           <el-option
@@ -67,6 +70,7 @@ export default {
       },
     };
   },
+  props:['show'],
   methods: {
     //获取一级分类数据的方法
     async getCategory1List() {
